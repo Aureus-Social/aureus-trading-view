@@ -10,6 +10,8 @@ import UserMenu from './components/UserMenu'
 import Screener from './components/Screener'
 import AIAnalysis from './components/AIAnalysis'
 import LiveRoom from './components/LiveRoom'
+import JournalModal from './components/JournalModal'
+import ReplayMode from './components/ReplayMode'
 import { useAuth } from './store/auth'
 
 // Icons SVG inline
@@ -108,6 +110,8 @@ export default function App() {
   const [showScreener, setShowScreener] = useState(false)
   const [showAI, setShowAI] = useState(false)
   const [showLiveRoom, setShowLiveRoom] = useState(false)
+  const [showJournal, setShowJournal] = useState(false)
+  const [showReplay, setShowReplay] = useState(false)
 
   // Init auth session
   useEffect(() => { initAuth() }, [])
@@ -140,16 +144,23 @@ export default function App() {
         </div>
 
         {/* Nav items */}
-        {['Chart', 'Screener', 'IA SMC', 'Live Room', 'Alertes', 'Calendrier'].map(item => (
+        {['Chart', 'Screener', 'IA SMC', 'Live Room', 'Journal', 'Replay'].map(item => (
           <div key={item}
             onClick={() => {
               if (item === 'Screener') setShowScreener(true)
               if (item === 'IA SMC') setShowAI(true)
               if (item === 'Live Room') setShowLiveRoom(true)
+              if (item === 'Journal') setShowJournal(true)
+              if (item === 'Replay') setShowReplay(true)
             }}
-            style={{ padding: '0 12px', height: 36, display: 'flex', alignItems: 'center', fontSize: 12, color: item === 'Chart' ? '#fff' : item === 'IA SMC' ? '#c6a34e' : item === 'Live Room' ? '#ef5350' : '#787b86', cursor: 'pointer', borderRight: '1px solid #2a2e39', whiteSpace: 'nowrap', gap: 4 }}
+            style={{ padding: '0 12px', height: 36, display: 'flex', alignItems: 'center', fontSize: 12,
+              color: item === 'Chart' ? '#fff' : item === 'IA SMC' ? '#c6a34e' : item === 'Live Room' ? '#ef5350' : item === 'Replay' ? '#2196f3' : '#787b86',
+              cursor: 'pointer', borderRight: '1px solid #2a2e39', whiteSpace: 'nowrap', gap: 4 }}
             onMouseEnter={e => { if (item !== 'Chart') e.currentTarget.style.color = '#d1d4dc' }}
-            onMouseLeave={e => { if (item !== 'Chart') e.currentTarget.style.color = item === 'IA SMC' ? '#c6a34e' : item === 'Live Room' ? '#ef5350' : '#787b86' }}>
+            onMouseLeave={e => {
+              if (item === 'Chart') return
+              e.currentTarget.style.color = item === 'IA SMC' ? '#c6a34e' : item === 'Live Room' ? '#ef5350' : item === 'Replay' ? '#2196f3' : '#787b86'
+            }}>
             {item === 'Live Room' && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#ef5350' }} />}
             {item}
           </div>
@@ -337,6 +348,12 @@ export default function App() {
 
       {/* Live Room */}
       {showLiveRoom && <LiveRoom onClose={() => setShowLiveRoom(false)} />}
+
+      {/* Journal */}
+      {showJournal && <JournalModal onClose={() => setShowJournal(false)} />}
+
+      {/* Replay */}
+      {showReplay && <ReplayMode onClose={() => setShowReplay(false)} />}
     </div>
   )
 }

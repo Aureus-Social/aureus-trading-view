@@ -3,18 +3,12 @@ import { useStore } from '../store'
 import { generateMockCandles, simulateTick } from '../lib/indicators'
 import { SYMBOLS } from '../store'
 
-// In production: replace POLYGON_API_KEY and connect to wss://socket.polygon.io/forex
-// Docs: https://polygon.io/docs/forex/get_v2_aggs_ticker__forexticker__range__multiplier___timespan___from___to_
-const POLYGON_API_KEY = import.meta.env.VITE_POLYGON_API_KEY || null
-
 export function useMarketData() {
   const { symbol, timeframe, setCandles, setLivePrice, updateWatchlistPrice, watchlist } = useStore()
-  const intervalRef = useRef(null)
   const tickIntervalRef = useRef(null)
-  const wsRef = useRef(null)
 
   useEffect(() => {
-    // Load initial candles
+    // Load initial candles for main chart
     const sym = SYMBOLS.find(s => s.symbol === symbol)
     const candles = generateMockCandles(200, sym?.base || 2320, symbol)
     setCandles(candles)
@@ -28,20 +22,14 @@ export function useMarketData() {
     // Initialize watchlist prices
     watchlist.forEach(sym => {
       const s = SYMBOLS.find(x => x.symbol === sym)
-      if (s) {
-        const mock = generateMockCandles(2, s.base, sym)
-        const chg = mock[1].close - mock[0].close
-        updateWatchlistPrice(sym, mock[1].close, (chg / mock[0].close) * 100)
-      }
+      if (!s) return
+      const base = s.base
+      const price = base + (Math.random() - 0.49) * base * 0.002
+      const chgPct = (Math.random() - 0.49) * 1.5
+      updateWatchlistPrice(sym, price, chgPct)
     })
 
-    // Simulate live ticks (replace with Polygon.io WebSocket in production)
-    // Production: wss://socket.polygon.io/forex
-    // const ws = new WebSocket('wss://socket.polygon.io/forex')
-    // ws.onopen = () => { ws.send(JSON.stringify({ action: 'auth', params: POLYGON_API_KEY })) }
-    // ws.onmessage = (e) => { /* handle tick */ }
-    // wsRef.current = ws
-
+    // Live tick simulation (Polygon.io WebSocket en prod)
     tickIntervalRef.current = setInterval(() => {
       setCandles(prev => {
         if (!prev.length) return prev
@@ -50,25 +38,21 @@ export function useMarketData() {
         const change = updated.close - prev[0].close
         const pct = (change / prev[0].close) * 100
         setLivePrice(updated.close, change, pct)
-
-        // Simulate watchlist updates
-        watchlist.forEach(sym => {
-          if (sym !== symbol) {
-            updateWatchlistPrice(sym, prev => {
-              const s = SYMBOLS.find(x => x.symbol === sym)
-              const base = s?.base || 100
-              return base + (Math.random() - 0.49) * base * 0.001
-            })
-          }
-        })
-
         return [...prev.slice(0, -1), updated]
       })
-    }, 800) // ~800ms tick simulation
 
-    return () => {
-      clearInterval(tickIntervalRef.current)
-      if (wsRef.current) wsRef.current.close()
-    }
+      // Simulate watchlist price moves
+      watchlist.forEach(sym => {
+        if (sym === symbol) return
+        const s = SYMBOLS.find(x => x.symbol === sym)
+        if (!s) return
+        const base = s.base
+        const price = base + (Math.random() - 0.49) * base * 0.003
+        const chgPct = (Math.random() - 0.49) * 2
+        updateWatchlistPrice(sym, price, chgPct)
+      })
+    }, 800)
+
+    return () => clearInterval(tickIntervalRef.current)
   }, [symbol, timeframe])
 }

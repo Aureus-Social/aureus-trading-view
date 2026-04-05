@@ -7,6 +7,9 @@ import RightPanel from './components/RightPanel'
 import AuthModal from './components/AuthModal'
 import PricingModal from './components/PricingModal'
 import UserMenu from './components/UserMenu'
+import Screener from './components/Screener'
+import AIAnalysis from './components/AIAnalysis'
+import LiveRoom from './components/LiveRoom'
 import { useAuth } from './store/auth'
 
 // Icons SVG inline
@@ -102,6 +105,9 @@ export default function App() {
   const { init: initAuth } = useAuth()
   const [showSearch, setShowSearch] = useState(false)
   const [showPricing, setShowPricing] = useState(false)
+  const [showScreener, setShowScreener] = useState(false)
+  const [showAI, setShowAI] = useState(false)
+  const [showLiveRoom, setShowLiveRoom] = useState(false)
 
   // Init auth session
   useEffect(() => { initAuth() }, [])
@@ -134,10 +140,17 @@ export default function App() {
         </div>
 
         {/* Nav items */}
-        {['Chart', 'Screener', 'Heatmap', 'Alertes', 'Calendrier'].map(item => (
-          <div key={item} style={{ padding: '0 12px', height: 36, display: 'flex', alignItems: 'center', fontSize: 12, color: item === 'Chart' ? '#fff' : '#787b86', cursor: 'pointer', borderRight: '1px solid #2a2e39', whiteSpace: 'nowrap' }}
+        {['Chart', 'Screener', 'IA SMC', 'Live Room', 'Alertes', 'Calendrier'].map(item => (
+          <div key={item}
+            onClick={() => {
+              if (item === 'Screener') setShowScreener(true)
+              if (item === 'IA SMC') setShowAI(true)
+              if (item === 'Live Room') setShowLiveRoom(true)
+            }}
+            style={{ padding: '0 12px', height: 36, display: 'flex', alignItems: 'center', fontSize: 12, color: item === 'Chart' ? '#fff' : item === 'IA SMC' ? '#c6a34e' : item === 'Live Room' ? '#ef5350' : '#787b86', cursor: 'pointer', borderRight: '1px solid #2a2e39', whiteSpace: 'nowrap', gap: 4 }}
             onMouseEnter={e => { if (item !== 'Chart') e.currentTarget.style.color = '#d1d4dc' }}
-            onMouseLeave={e => { if (item !== 'Chart') e.currentTarget.style.color = '#787b86' }}>
+            onMouseLeave={e => { if (item !== 'Chart') e.currentTarget.style.color = item === 'IA SMC' ? '#c6a34e' : item === 'Live Room' ? '#ef5350' : '#787b86' }}>
+            {item === 'Live Room' && <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#ef5350' }} />}
             {item}
           </div>
         ))}
@@ -236,6 +249,14 @@ export default function App() {
           Indicateurs
         </button>
 
+        {/* AI SMC button */}
+        <button
+          onClick={() => setShowAI(true)}
+          style={{ display: 'flex', alignItems: 'center', height: 38, padding: '0 12px', fontSize: 12, color: '#c6a34e', cursor: 'pointer', gap: 5, background: 'none', border: 'none', borderRight: '1px solid #2a2e39' }}>
+          <svg width="13" height="13" viewBox="0 0 18 18" fill="none"><path d="M9 1L16 15H2Z" fill="#c6a34e"/></svg>
+          IA SMC
+        </button>
+
         {/* Settings */}
         <button
           onClick={() => setShowSettings(!showSettings)}
@@ -307,6 +328,15 @@ export default function App() {
 
       {/* Pricing modal */}
       {showPricing && <PricingModal onClose={() => setShowPricing(false)} />}
+
+      {/* Screener */}
+      {showScreener && <Screener onClose={() => setShowScreener(false)} />}
+
+      {/* AI Analysis */}
+      {showAI && <AIAnalysis onClose={() => setShowAI(false)} />}
+
+      {/* Live Room */}
+      {showLiveRoom && <LiveRoom onClose={() => setShowLiveRoom(false)} />}
     </div>
   )
 }

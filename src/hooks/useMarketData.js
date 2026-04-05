@@ -1,58 +1,59 @@
 import { useEffect, useRef } from 'react'
-import { useStore } from '../store'
+import { useStore, SYMBOLS } from '../store'
 import { generateMockCandles, simulateTick } from '../lib/indicators'
-import { SYMBOLS } from '../store'
 
 export function useMarketData() {
-  const { symbol, timeframe, setCandles, setLivePrice, updateWatchlistPrice, watchlist } = useStore()
-  const tickIntervalRef = useRef(null)
+  const store = useStore
+  const tickRef = useRef(null)
+
+  const { symbol, timeframe } = useStore()
 
   useEffect(() => {
-    // Load initial candles for main chart
+    const { setCandles, setLivePrice, updateWatchlistPrice, watchlist } = useStore.getState()
     const sym = SYMBOLS.find(s => s.symbol === symbol)
+
+    // Load initial candles
     const candles = generateMockCandles(200, sym?.base || 2320, symbol)
     setCandles(candles)
 
     const first = candles[0]
-    const last = candles[candles.length - 1]
-    const change = last.close - first.close
-    const pct = (change / first.close) * 100
-    setLivePrice(last.close, change, pct)
+    const last  = candles[candles.length - 1]
+    setLivePrice(last.close, last.close - first.close, ((last.close - first.close) / first.close) * 100)
 
-    // Initialize watchlist prices
-    watchlist.forEach(sym => {
-      const s = SYMBOLS.find(x => x.symbol === sym)
-      if (!s) return
-      const base = s.base
-      const price = base + (Math.random() - 0.49) * base * 0.002
+    // Init watchlist prices
+    watchlist.forEach(s => {
+      const info = SYMBOLS.find(x => x.symbol === s)
+      if (!info) return
+      const price  = info.base * (1 + (Math.random() - 0.49) * 0.002)
       const chgPct = (Math.random() - 0.49) * 1.5
-      updateWatchlistPrice(sym, price, chgPct)
+      updateWatchlistPrice(s, price, chgPct)
     })
 
-    // Live tick simulation (Polygon.io WebSocket en prod)
-    tickIntervalRef.current = setInterval(() => {
-      setCandles(prev => {
-        if (!prev.length) return prev
-        const last = prev[prev.length - 1]
-        const updated = simulateTick(last)
-        const change = updated.close - prev[0].close
-        const pct = (change / prev[0].close) * 100
-        setLivePrice(updated.close, change, pct)
-        return [...prev.slice(0, -1), updated]
-      })
+    // Live tick — utilise getState() pour éviter le callback Zustand
+    tickRef.current = setInterval(() => {
+      const state = useStore.getState()
+      const prev  = state.candles
+      if (!prev || !prev.length) return
 
-      // Simulate watchlist price moves
-      watchlist.forEach(sym => {
-        if (sym === symbol) return
-        const s = SYMBOLS.find(x => x.symbol === sym)
-        if (!s) return
-        const base = s.base
-        const price = base + (Math.random() - 0.49) * base * 0.003
+      const updated = simulateTick(prev[prev.length - 1])
+      const newCandles = [...prev.slice(0, -1), updated]
+      state.setCandles(newCandles)
+
+      const change = updated.close - newCandles[0].close
+      const pct    = (change / newCandles[0].close) * 100
+      state.setLivePrice(updated.close, change, pct)
+
+      // Watchlist updates
+      state.watchlist.forEach(s => {
+        if (s === symbol) return
+        const info = SYMBOLS.find(x => x.symbol === s)
+        if (!info) return
+        const price  = info.base * (1 + (Math.random() - 0.49) * 0.003)
         const chgPct = (Math.random() - 0.49) * 2
-        updateWatchlistPrice(sym, price, chgPct)
+        state.updateWatchlistPrice(s, price, chgPct)
       })
     }, 800)
 
-    return () => clearInterval(tickIntervalRef.current)
+    return () => clearInterval(tickRef.current)
   }, [symbol, timeframe])
 }

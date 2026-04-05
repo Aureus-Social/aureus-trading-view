@@ -1,9 +1,13 @@
-import { useState, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useStore, SYMBOLS, TIMEFRAMES, CHART_TYPES } from './store'
 import { useMarketData } from './hooks/useMarketData'
 import Chart from './components/Chart'
 import Settings from './components/Settings'
 import RightPanel from './components/RightPanel'
+import AuthModal from './components/AuthModal'
+import PricingModal from './components/PricingModal'
+import UserMenu from './components/UserMenu'
+import { useAuth } from './store/auth'
 
 // Icons SVG inline
 const SearchIcon = () => (
@@ -95,7 +99,12 @@ export default function App() {
     setTimeframe, setChartType, showSettings, setShowSettings
   } = useStore()
 
+  const { init: initAuth } = useAuth()
   const [showSearch, setShowSearch] = useState(false)
+  const [showPricing, setShowPricing] = useState(false)
+
+  // Init auth session
+  useEffect(() => { initAuth() }, [])
 
   // Initialize market data & live ticks
   useMarketData()
@@ -142,13 +151,17 @@ export default function App() {
         </div>
 
         {/* Right */}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4, paddingRight: 12 }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ fontSize: 10, color: '#787b86', display: 'flex', alignItems: 'center', gap: 4 }}>
             <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#26a69a' }} />
             Live · ~8ms
           </div>
-          <div style={{ width: 1, height: 16, background: '#2a2e39', margin: '0 6px' }} />
-          <div style={{ width: 26, height: 26, borderRadius: '50%', background: '#c6a34e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#131722', cursor: 'pointer' }}>N</div>
+          <button onClick={() => setShowPricing(true)}
+            style={{ background: '#c6a34e', border: 'none', borderRadius: 4, color: '#131722', fontSize: 10, fontWeight: 700, padding: '3px 9px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace' }}>
+            Pro ⚡
+          </button>
+          <div style={{ width: 1, height: 16, background: '#2a2e39' }} />
+          <UserMenu onOpenPricing={() => setShowPricing(true)} />
         </div>
       </div>
 
@@ -288,6 +301,12 @@ export default function App() {
 
       {/* Search modal */}
       {showSearch && <SearchModal onClose={() => setShowSearch(false)} />}
+
+      {/* Auth modal */}
+      <AuthModal />
+
+      {/* Pricing modal */}
+      {showPricing && <PricingModal onClose={() => setShowPricing(false)} />}
     </div>
   )
 }

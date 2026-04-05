@@ -1,5 +1,6 @@
 import { useStore, SYMBOLS } from '../store'
 import { detectOrderBlocks, detectFVG } from '../lib/indicators'
+import AlertsPanel from './AlertsPanel'
 
 function WatchlistItem({ symbol }) {
   const { setSymbol, symbol: active, watchlistPrices } = useStore()
@@ -129,29 +130,7 @@ export default function RightPanel() {
           </>
         )}
 
-        {activePanel === 'alerts' && (
-          <>
-            {sectionTitle('Alertes actives')}
-            {[
-              { sym: 'XAUUSD', cond: '> 2 350', color: '#f0b90b' },
-              { sym: 'BTC', cond: '< 65 000', color: '#ef5350' },
-              { sym: 'EUR/USD', cond: 'OB Bull touché', color: '#26a69a' },
-            ].map((a, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px', borderBottom: '0.5px solid #1e222d' }}>
-                <div style={{ width: 6, height: 6, borderRadius: '50%', background: a.color, flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontSize: 11, color: '#d1d4dc', fontFamily: 'JetBrains Mono, monospace' }}>{a.sym}</div>
-                  <div style={{ fontSize: 10, color: '#787b86' }}>{a.cond}</div>
-                </div>
-              </div>
-            ))}
-            <div style={{ padding: '10px 12px' }}>
-              <button style={{ width: '100%', background: '#2962ff20', border: '1px solid #2962ff40', borderRadius: 4, color: '#2962ff', fontSize: 11, padding: '6px', cursor: 'pointer', fontFamily: 'JetBrains Mono, monospace' }}>
-                + Nouvelle alerte
-              </button>
-            </div>
-          </>
-        )}
+        {activePanel === 'alerts' && <AlertsPanel />}
       </div>
     </div>
   )
